@@ -1,0 +1,4 @@
+# The original game code is 32-bit x86, so the runtime must be a 32-bit Windows process.
+# Everything in the workspace is built for that target by default.
+[build]
+target = "i686-pc-windows-msvc"

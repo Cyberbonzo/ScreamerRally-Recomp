@@ -1,0 +1,10 @@
+[package]
+name = "sr-input"
+description = "Controller input (XInput): dead zones, sensitivity, remapping, hot-plug; feeds the game's virtual gameport joystick"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_Input_XboxController", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading", "Win32_Security"] }

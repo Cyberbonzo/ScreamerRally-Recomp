@@ -1,0 +1,9 @@
+[package]
+name = "sr-scene"
+description = "Scene description shared by the runtime (which extracts it) and the native renderer (which draws it)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]

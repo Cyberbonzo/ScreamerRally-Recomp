@@ -1,0 +1,16 @@
+[package]
+name = "sr-runtime"
+description = "Native execution environment for the original Screamer Rally code: loader, traps, DOS/DPMI/BIOS/hardware HLE"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sr-le.workspace = true
+sr-scene.workspace = true
+sr-disc.workspace = true
+sr-audio = { path = "../sr-audio" }
+sr-input = { path = "../sr-input" }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_Memory", "Win32_System_Diagnostics_Debug", "Win32_System_Kernel", "Win32_System_Threading", "Win32_System_SystemInformation", "Win32_System_Performance", "Win32_System_Time", "Win32_Storage_FileSystem", "Win32_Security", "Win32_System_LibraryLoader"] }
+iced-x86 = { version = "1.22.0", default-features = false, features = ["std", "decoder", "intel", "instr_info", "encoder", "block_encoder"] }

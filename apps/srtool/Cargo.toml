@@ -1,0 +1,13 @@
+[package]
+name = "srtool"
+description = "Developer tool: inspect the Screamer Rally disc and executables"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sr-disc.workspace = true
+sr-le.workspace = true
+sr-crt = { path = "../../crates/sr-crt" }
+iced-x86 = { version = "1.22.0", default-features = false, features = ["std", "decoder", "intel"] }

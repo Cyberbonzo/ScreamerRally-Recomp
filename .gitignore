@@ -1,0 +1,28 @@
+# Original game data must never be committed
+*.mdf
+*.mds
+*.bin
+*.cue
+*.iso
+*.img
+*.ccd
+*.sub
+*.EXE
+*.OVL
+*.386
+gamedata/
+
+# Local working area (extracted disc, research output, Python venv)
+work/
+
+# Build output
+target/
+*.pdb
+*.obj
+*.ilk
+
+# Release packages (tools/package.ps1)
+dist/
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/
