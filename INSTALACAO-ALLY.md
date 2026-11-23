@@ -22,6 +22,12 @@ O perfil final usa tela cheia sem bordas, 1920×1080, aspecto 16:9, escala inter
 | Pausar ou continuar | Start |
 | Configurações | View |
 
+## Velocidade em km/h
+
+O velocímetro usa a escala métrica do próprio jogo. A unidade aparece no mostrador e as fichas dos cinco carros também exibem a velocidade máxima em km/h. Os textos dos menus continuam em inglês. Na corrida de Rally China, a verificação do jogo em execução mostrou a unidade `KMH` e o indicador interno de milhas desativado.
+
+Para reproduzir a configuração com seu próprio CD em inglês, extraia `DATA/LOCAL.DAT`, `GFX/GAME2.DAT` e `GFX/GRAF2.DAT` para uma pasta de entrada. Em um computador com Python e Pillow, execute `python tools/metric_overlay.py ENTRADA SAIDA`. O utilitário confere os hashes dos originais. No Windows, usa Arial Bold Italic para as fichas. Em outro sistema, indique um arquivo de fonte negrito e itálico com `--font`. Copie os diretórios `DATA` e `GFX` gerados para `data/C/SR/` e reabra o jogo. Para voltar a mph, remova apenas os três DAT gerados dessa pasta.
+
 ## Correções para o Proton Experimental
 
 - O runtime lê o seletor FS do processo e trata os acessos à memória convencional do DOS usados na inicialização pelo WoW64.
