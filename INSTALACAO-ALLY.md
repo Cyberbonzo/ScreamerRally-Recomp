@@ -12,6 +12,14 @@ Esta adaptação parte da versão v0.1.1 de ScreamerRally-Recomp. O executável 
 
 ## Imagem e controle
 
+### Artes da biblioteca Steam
+
+A capa vertical de 600×900, a cápsula horizontal de 920×430 e o fundo de 1920×620 estão em `assets/steam/`. As três ilustrações reinterpretam a caixa de PC de 1997, com o carro violeta de quatro faróis, o rival amarelo número 22 e a torre italiana. A referência é a [caixa preservada pelo Centre for Computing History](https://www.computinghistory.org.uk/det/58650/Screamer-Rally/). O logotipo transparente e o ícone SR vêm dos arquivos `assets/logo.png` e `assets/icon.png` do projeto.
+
+No Ally, as cinco peças estão em `~/Games/ScreamerRally-Recomp/artes/` e aplicadas ao atalho **Screamer Rally (1997)**. O fundo usa o logotipo separado no canto inferior esquerdo. Em outro dispositivo, selecione as cinco imagens na personalização de artes do atalho correspondente na Steam.
+
+### Imagem da corrida e comandos
+
 O perfil final usa tela cheia sem bordas, 1920×1080, aspecto 16:9, escala interna de 100%, interpolação ligada e limite de 60 FPS no Gamescope. O modo exclusivo de 1920×1080 a 60 Hz também foi testado. O cenário 3D ganha campo de visão nas laterais. Imagens 2D fixas, como a tela de carregamento, conservam a proporção original. A física está na taxa padrão do projeto, 33 passos por segundo.
 
 | Comando | Controle do Ally |
