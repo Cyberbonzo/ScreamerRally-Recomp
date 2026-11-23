@@ -276,9 +276,13 @@ pub fn build(s: &Settings, crt: &sr_crt::SharedCrt) -> Menu {
                 top(choice(
                     "autopilot",
                     "Autopilot",
-                    ON_OFF,
+                    if sr_runtime::autopilot::locked_off() { &["Off"] } else { ON_OFF },
                     sr_runtime::autopilot::is_on() as usize,
-                    "The game's own AI drives your car. Tab or the left stick click switch it at any time.",
+                    if sr_runtime::autopilot::locked_off() {
+                        "Manual driving is locked on for this profile."
+                    } else {
+                        "The game's own AI drives your car. Tab or the left stick click switch it at any time."
+                    },
                 )),
                 advanced("Rarely changed: the simulation rate, which the car physics depends on."),
                 sub(choice(
@@ -304,6 +308,9 @@ pub fn build(s: &Settings, crt: &sr_crt::SharedCrt) -> Menu {
 
 /// Dim the options that have no effect with the current values of the ones they depend on.
 fn update_inactive(menu: &mut Menu) {
+    if let Some(i) = menu.item_mut("autopilot") {
+        i.inactive = sr_runtime::autopilot::locked_off();
+    }
     // the limit paces interpolated frames only (`interp` and `native::menus` read it then)
     let interpolated = index(menu, "frame_rate") == 1;
     // in 4:3 the picture is pillarboxed: there is no width for the menus' scenes to fill

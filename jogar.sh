@@ -7,6 +7,7 @@ export STEAM_COMPAT_DATA_PATH="$PWD/.proton" DXVK_FRAME_RATE=60 DXVK_LOG_PATH="$
 unset LD_PRELOAD
 export PROTON_USE_WOW64=1
 export SR_COOPERATIVE_TIMER=1
+export SR_AUTOPILOT=off
 # The game uses exceptions for normal DOS services. Per-exception logging stalls I/O.
 export PROTON_LOG=0 WINEDEBUG=-all
 common="$STEAM_COMPAT_CLIENT_INSTALL_PATH/steamapps/common"

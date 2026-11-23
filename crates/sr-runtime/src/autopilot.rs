@@ -23,18 +23,36 @@ const PLAYER1_BINDINGS: u32 = 0x139bd0;
 static ON: AtomicBool = AtomicBool::new(false);
 static ENV: std::sync::Once = std::sync::Once::new();
 
+/// The handheld launcher requests manual driving for the whole process.
+pub fn locked_off() -> bool {
+    static LOCK: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *LOCK.get_or_init(|| std::env::var("SR_AUTOPILOT").as_deref() == Ok("off"))
+}
+
 pub fn toggle() -> bool {
-    let on = !ON.load(Ordering::Relaxed);
-    ON.store(on, Ordering::Relaxed);
-    on
+    set(!is_on());
+    is_on()
 }
 
 pub fn set(on: bool) {
-    ON.store(on, Ordering::Relaxed);
+    ON.store(on && !locked_off(), Ordering::Relaxed);
 }
 
 pub fn is_on() -> bool {
     ON.load(Ordering::Relaxed)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn activation_respects_launch_policy() {
+        let manual = std::env::var("SR_AUTOPILOT").as_deref() == Ok("off");
+        super::set(false);
+        assert_eq!(super::toggle(), !manual);
+        super::set(true);
+        assert_eq!(super::is_on(), !manual);
+        super::set(false);
+    }
 }
 
 #[derive(Default)]
@@ -48,8 +66,10 @@ pub struct Autopilot {
 pub fn tick(m: &mut Machine) {
     // SR_AUTOPILOT=1 (diagnostics, deterministic runs): on from the start
     ENV.call_once(|| {
-        if std::env::var_os("SR_AUTOPILOT").is_some() {
-            ON.store(true, Ordering::Relaxed);
+        if locked_off() {
+            crate::info!("autopilot locked off: manual player control");
+        } else if std::env::var_os("SR_AUTOPILOT").is_some() {
+            set(true);
         }
     });
     let on = ON.load(Ordering::Relaxed);

@@ -30,6 +30,8 @@ O perfil final usa tela cheia sem bordas, 1920×1080, aspecto 16:9, escala inter
 | Pausar ou continuar | Start |
 | Configurações | View |
 
+O perfil do Ally mantém a direção manual em todas as corridas do jogador. O atalho inicia o processo com `SR_AUTOPILOT=off`. Clicar no analógico esquerdo ou apertar Tab mantém o piloto automático desligado, e a opção aparece fixada em **Off** no menu Gameplay. A demonstração da tela de título continua sendo controlada pelo próprio jogo.
+
 ## Velocidade em km/h
 
 O velocímetro usa a escala métrica do próprio jogo. A unidade aparece no mostrador e as fichas dos cinco carros também exibem a velocidade máxima em km/h. Os textos dos menus continuam em inglês. Na corrida de Rally China, a verificação do jogo em execução mostrou a unidade `KMH` e o indicador interno de milhas desativado.
