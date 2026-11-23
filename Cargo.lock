@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "screamer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sr-audio",
  "sr-crt",
@@ -53,36 +53,36 @@ dependencies = [
 
 [[package]]
 name = "sr-audio"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "windows",
 ]
 
 [[package]]
 name = "sr-crt"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "windows",
 ]
 
 [[package]]
 name = "sr-disc"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "sr-input"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "windows-sys",
 ]
 
 [[package]]
 name = "sr-le"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "sr-render"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sr-crt",
  "sr-runtime",
@@ -92,7 +92,7 @@ dependencies = [
 
 [[package]]
 name = "sr-runtime"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "iced-x86",
  "sr-audio",
@@ -105,11 +105,11 @@ dependencies = [
 
 [[package]]
 name = "sr-scene"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "sr-viseditor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sr-render",
  "sr-runtime",
@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "srtool"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "iced-x86",
  "sr-crt",

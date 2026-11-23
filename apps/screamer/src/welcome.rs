@@ -23,7 +23,7 @@ use windows::Win32::UI::HiDpi::{AdjustWindowRectExForDpi, GetDpiForSystem, GetDp
 use windows::Win32::UI::Input::KeyboardAndMouse::{ReleaseCapture, SetCapture, VK_ESCAPE, VK_RETURN};
 use windows::Win32::UI::Shell::{FOS_FORCEFILESYSTEM, FOS_PATHMUSTEXIST, FOS_PICKFOLDERS, FileOpenDialog, IFileOpenDialog, SIGDN_FILESYSPATH};
 use windows::Win32::UI::WindowsAndMessaging::*;
-use windows::core::{PCWSTR, w};
+use windows::core::w;
 
 use crate::firstrun::Found;
 
@@ -462,7 +462,7 @@ unsafe fn window(note: Option<&str>, check: &mut dyn FnMut(&Path) -> Result<Foun
             hInstance: instance.into(),
             hCursor: LoadCursorW(None, IDC_ARROW)?,
             lpszClassName: class,
-            hIcon: LoadIconW(Some(instance.into()), PCWSTR(1 as _)).unwrap_or_default(),
+            hIcon: LoadIconW(Some(instance.into()), sr_render::window::PROGRAM_ICON).unwrap_or_default(),
             ..Default::default()
         };
         RegisterClassExW(&wc);
@@ -473,6 +473,7 @@ unsafe fn window(note: Option<&str>, check: &mut dyn FnMut(&Path) -> Result<Foun
         let (ww, wh) = (r.right - r.left, r.bottom - r.top);
         let (sw, sh) = (GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
         let hwnd = CreateWindowExW(WINDOW_EX_STYLE(0), class, w!("Screamer Rally"), style, (sw - ww) / 2, (sh - wh) / 2, ww, wh, None, None, Some(instance.into()), None)?;
+        sr_render::window::set_icons(hwnd);
         // a dark title bar to match
         let dark: i32 = 1;
         let _ = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark as *const i32 as *const _, 4);

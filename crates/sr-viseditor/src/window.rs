@@ -279,7 +279,9 @@ impl EditorWindow {
         unsafe {
             let inst = GetModuleHandleW(None).map_err(|e| e.to_string())?;
             let class = w!("ScreamerRallyVisibilityEditor");
-            let wc = WNDCLASSW { lpfnWndProc: Some(wndproc), hInstance: inst.into(), lpszClassName: class, hCursor: LoadCursorW(None, IDC_ARROW).unwrap_or_default(), ..Default::default() };
+            // the program's icon (icon group 1 of the executable, `apps/screamer/build.rs`)
+            let icon = LoadIconW(Some(inst.into()), windows::core::PCWSTR(1 as _)).unwrap_or_default();
+            let wc = WNDCLASSW { lpfnWndProc: Some(wndproc), hInstance: inst.into(), lpszClassName: class, hCursor: LoadCursorW(None, IDC_ARROW).unwrap_or_default(), hIcon: icon, ..Default::default() };
             RegisterClassW(&wc);
             let t = utf16(title);
             let (x, y, w, h) = at.unwrap_or((CW_USEDEFAULT, CW_USEDEFAULT, 1200, 900));

@@ -337,6 +337,26 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) 
 }
 
 /// Opt in to per-monitor DPI awareness so the window is sized in real pixels.
+/// The program's icon: icon group 1 in the executable's resources (`apps/screamer/build.rs`).
+pub const PROGRAM_ICON: PCWSTR = PCWSTR(1 as _);
+
+/// The program's icon on window `hwnd`, big (the taskbar, Alt+Tab) and small (the title bar)
+/// at the window's DPI, each drawn from the icon's nearest size. Nothing when the executable
+/// has no icon.
+pub fn set_icons(hwnd: HWND) {
+    use windows::Win32::UI::HiDpi::{GetDpiForWindow, GetSystemMetricsForDpi};
+    unsafe {
+        let Ok(inst) = GetModuleHandleW(None) else { return };
+        let dpi = GetDpiForWindow(hwnd).max(96);
+        for (which, cx, cy) in [(ICON_BIG, SM_CXICON, SM_CYICON), (ICON_SMALL, SM_CXSMICON, SM_CYSMICON)] {
+            let (w, h) = (GetSystemMetricsForDpi(cx, dpi), GetSystemMetricsForDpi(cy, dpi));
+            if let Ok(icon) = LoadImageW(Some(inst.into()), PROGRAM_ICON, IMAGE_ICON, w, h, LR_SHARED) {
+                SendMessageW(hwnd, WM_SETICON, Some(WPARAM(which as usize)), Some(LPARAM(icon.0 as isize)));
+            }
+        }
+    }
+}
+
 pub fn init_dpi() {
     use windows::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext};
     unsafe {
@@ -371,6 +391,7 @@ pub fn spawn(title: &str, width: u32, height: u32, mode: WindowMode, keys: KeySi
                 lpszClassName: class,
                 hCursor: LoadCursorW(None, IDC_ARROW).unwrap_or_default(),
                 hbrBackground: HBRUSH(GetStockObject(BLACK_BRUSH).0),
+                hIcon: LoadIconW(Some(inst.into()), PROGRAM_ICON).unwrap_or_default(),
                 ..Default::default()
             };
             RegisterClassW(&wc);
@@ -400,6 +421,7 @@ pub fn spawn(title: &str, width: u32, height: u32, mode: WindowMode, keys: KeySi
             };
             let data = Box::into_raw(Box::new(data));
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, data as usize as _);
+            set_icons(hwnd);
             let _ = ShowWindow(hwnd, SW_SHOW);
             if mode != WindowMode::Windowed {
                 apply_mode(hwnd, &*data, mode.code());

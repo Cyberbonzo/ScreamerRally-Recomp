@@ -139,9 +139,23 @@ fn requested() -> i32 {
 
 /// Make sure the main view's constants are applied (before drawing it from the runtime).
 pub fn ensure_main(m: &mut Machine) {
+    sync_applied(m);
     let e = m.widescreen.main_ext;
     if m.widescreen.available && m.widescreen.applied != e {
         apply(m, e);
+    }
+}
+
+/// `applied` as guest memory has it: the extension in the projection centre's constant. The
+/// interpolated frames put guest memory back after drawing (`crate::interp`), the code's
+/// constants included, so after a step with the rear-view mirror memory holds the main
+/// view's extension while the mirror's pass had recorded 0. A switch to 4:3 (extension 0)
+/// then found nothing to change and the wide constants stayed: the mirror (its own x table,
+/// half scale) drawn half the old extension to the right (2026-11-23).
+fn sync_applied(m: &mut Machine) {
+    if m.widescreen.available {
+        let centre = read(m, &Site { link: CENTER_HI[0], size: 4, value: |_| 0 });
+        m.widescreen.applied = (centre >> 16) as i32 - 0x13f;
     }
 }
 
@@ -196,6 +210,8 @@ fn set_view(m: &mut Machine, f: &mut HookFrame, tramp: u32) -> HookResult {
     }
     let wide = race_view || MENUS_WIDE.load(std::sync::atomic::Ordering::Relaxed);
     let e = if mirror || !wide { 0 } else { requested() };
+    // what memory holds, not what was last written (see `sync_applied`)
+    sync_applied(m);
     if !mirror {
         m.widescreen.main_ext = e;
     }

@@ -141,6 +141,15 @@ pub fn install(m: &mut Machine) -> Result<(), String> {
         set_original(true);
         crate::info!("2D pictures: drawn as the 3dfx build drew them (SR_UI_SCALING=original)");
     }
+    // the hooks read the game's sprite and picture tables directly, which lie in DOS memory:
+    // with virtual conventional memory (the launcher could not reserve the real region) those
+    // addresses are not mapped for the runtime's own code and the first sprite crashed it.
+    // The game's own 2D drawing then (as with SR_UI_SCALING=original)
+    if !m.lowmem.is_real() {
+        set_original(true);
+        crate::warn!("2D pictures: drawn as the 3dfx build drew them (DOS memory is virtual)");
+        return Ok(());
+    }
     m.install_observer("2D pictures: resize", RESIZE, resize)?;
     m.install_observer("2D pictures: background loaded", BKK_LOADED, bkk_loaded)?;
     m.install_observer("2D pictures: mirror frame loaded", PKC_LOADED, pkc_loaded)?;
