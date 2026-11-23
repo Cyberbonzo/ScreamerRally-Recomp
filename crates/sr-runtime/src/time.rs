@@ -23,6 +23,27 @@ pub fn deterministic() -> bool {
     DETERMINISTIC.load(Ordering::Relaxed)
 }
 
+/// Deliver guest interrupts at its frame waits while keeping real time on Proton.
+pub fn cooperative_timer() -> bool {
+    static ENABLED: OnceLock<bool> = OnceLock::new();
+    *ENABLED.get_or_init(|| std::env::var("SR_COOPERATIVE_TIMER").as_deref() == Ok("1")) && !deterministic()
+}
+
+pub fn pace_guest_ticks(ticks: u64) {
+    use std::cell::Cell;
+    use std::time::Duration;
+    thread_local! { static DEADLINE: Cell<Option<Instant>> = const { Cell::new(None) }; }
+    DEADLINE.with(|next| {
+        let now = Instant::now();
+        let base = next.get().filter(|d| now.saturating_duration_since(*d) < Duration::from_millis(100)).unwrap_or(now);
+        let deadline = base + Duration::from_secs_f64(ticks as f64 / crate::events::HMI_BASE_HZ);
+        next.set(Some(deadline));
+        if deadline > now {
+            std::thread::sleep(deadline - now);
+        }
+    });
+}
+
 pub fn virtual_ticks() -> u64 {
     VIRTUAL_TICKS.load(Ordering::Relaxed)
 }

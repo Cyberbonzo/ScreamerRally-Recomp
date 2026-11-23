@@ -529,7 +529,14 @@ fn handle(m: &mut Machine, ctx: &mut CONTEXT, rec: &EXCEPTION_RECORD) -> Result<
 
     // Segment register loads.
     if let Some(seg) = segment_load_target(&ins) {
-        if fault_addr.is_none_or(|a| a == u32::MAX) {
+        // WoW64 can report a data address for a selector exception. When
+        // the FS/GS source is a word wholly inside the loaded program, it
+        // was the selector load, not the memory read, that needs emulation.
+        let image_selector = matches!(seg, Seg::Fs | Seg::Gs)
+            && ins.mnemonic() == Mnemonic::Mov && ins.op1_kind() == OpKind::Memory
+            && operand_address(m, ctx, &ins, 1).is_some_and(|src|
+                m.img.contains(src) && src.checked_add(1).is_some_and(|last| m.img.contains(last)));
+        if fault_addr.is_none_or(|a| a == u32::MAX) || image_selector {
             if let Some(stub) = crate::segjit::translate(m, eip) {
                 ctx.Eip = stub;
                 return Ok(());
@@ -540,6 +547,17 @@ fn handle(m: &mut Machine, ctx: &mut CONTEXT, rec: &EXCEPTION_RECORD) -> Result<
 
     // Faulting access into the never-mapped first 64 KB: virtual conventional memory.
     if let Some(a) = fault_addr {
+        // Wine WoW64 can report a segment fault with no linear address. The
+        // DOS keyboard initialization writes the BIOS data area through GS.
+        // Resolve it only if the decoded operand actually falls in low RAM.
+        if a == u32::MAX && ins.segment_prefix() == Register::GS {
+            let low = (0..ins.op_count()).filter(|&i| ins.op_kind(i) == OpKind::Memory)
+                .filter_map(|i| operand_address(m, ctx, &ins, i))
+                .any(|va| va < 0x10000 && m.lowmem.translate(va).is_some());
+            if low {
+                return reexecute_low(m, ctx, &ins, eip, next);
+            }
+        }
         if a < 0x10000 {
             // an access through a segment with a virtual base (not conventional memory)
             let based = Seg::from_register(ins.memory_segment()).is_some_and(|s| m.sel.base(s) != 0);
@@ -622,6 +640,9 @@ fn translate_low(m: &mut Machine, linear: u32) -> Result<u32, String> {
 
 fn reexecute_low(m: &mut Machine, ctx: &mut CONTEXT, ins: &Instruction, eip: u32, next: u32) -> Result<(), String> {
     let scratch = m.scratch;
+    if eip >= scratch && eip < scratch + 256 {
+        return Err(format!("fault inside conventional memory translation: {}", format(ins)));
+    }
     let mut code: Vec<u8> = Vec::with_capacity(48);
     let is_string = matches!(
         ins.mnemonic(),

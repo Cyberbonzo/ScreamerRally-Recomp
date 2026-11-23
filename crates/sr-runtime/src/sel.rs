@@ -79,7 +79,9 @@ impl Default for Selectors {
         table.insert(FLAT_DS, flat);
         table.insert(FLAT_CS, Descriptor { access: 0xc0fb, ..flat });
         // The Win32 TEB selector reads back from FS; to the guest it is just "flat".
-        table.insert(0x0053, flat);
+        let teb: u16;
+        unsafe { core::arch::asm!("mov {sel:x}, fs", sel = out(reg) teb, options(nomem, nostack, preserves_flags)) };
+        table.insert(teb, flat);
         // DOS/4GW's predefined selector 0040h: the BIOS data area at linear 400h.
         table.insert(0x0043, Descriptor { base: 0x400, limit: 0xff, access: 0x00f3 });
         for s in SELBASE.iter() {
@@ -90,7 +92,7 @@ impl Default for Selectors {
             publish(*sel, Some(d.base));
         }
         let mut s = Selectors { table };
-        s.set_virt_all([(FLAT_DS, 0), (FLAT_CS, 0), (FLAT_DS, 0), (FLAT_DS, 0), (0x53, 0), (FLAT_DS, 0)]);
+        s.set_virt_all([(FLAT_DS, 0), (FLAT_CS, 0), (FLAT_DS, 0), (FLAT_DS, 0), (teb, 0), (FLAT_DS, 0)]);
         s
     }
 }

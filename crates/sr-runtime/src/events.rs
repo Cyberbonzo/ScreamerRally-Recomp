@@ -153,6 +153,10 @@ impl Scheduler {
 
     /// Start the PIT thread for the calling (guest) thread.
     pub fn start(&self) {
+        if crate::time::cooperative_timer() {
+            crate::info!("timer: delivering interrupts on the guest thread at frame waits (wall clock)");
+            return;
+        }
         let thread: HANDLE = unsafe { OpenThread(THREAD_ALL_ACCESS, 0, GetCurrentThreadId()) };
         assert!(!thread.is_null(), "OpenThread failed");
         let ctx = Pit {
@@ -351,6 +355,30 @@ fn guest_fpu_cw() -> u16 {
 }
 
 impl Scheduler {
+    /// Some screens, including the original pause menu, keep swapping frames without
+    /// entering the usual tick wait. Service the clock and keyboard there as well.
+    pub fn cooperative_frame(&self) {
+        use std::cell::Cell;
+        thread_local! { static LAST: Cell<Option<(Instant, u64)>> = const { Cell::new(None) }; }
+        LAST.with(|last| {
+            let now = Instant::now();
+            let ticks = crate::time::virtual_ticks();
+            let mut anchor = now;
+            if let Some((previous, delivered)) = last.get() {
+                if ticks == delivered {
+                    let period = Duration::from_secs_f64(1.0 / HMI_BASE_HZ);
+                    let elapsed = now.duration_since(previous).min(Duration::from_millis(100));
+                    let due = (elapsed.as_nanos() / period.as_nanos()) as u32;
+                    if due > 0 {
+                        self.virtual_ticks_until(|| false, due);
+                    }
+                    anchor = now - (elapsed - period * due);
+                }
+            }
+            last.set(Some((anchor, crate::time::virtual_ticks())));
+        });
+    }
+
     /// Deterministic mode, called on the guest thread where the game waits for timer ticks:
     /// issue base ticks (running the due timer callbacks and the key interrupts of that
     /// moment) until `done()` says the wait is over. At most `limit` ticks.

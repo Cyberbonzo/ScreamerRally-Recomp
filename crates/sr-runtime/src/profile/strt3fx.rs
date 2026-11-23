@@ -97,8 +97,8 @@ pub fn install(m: &mut Machine) -> Result<(), String> {
         crate::pacing::enter_timer(true);
         crate::hooks::HookResult::Resume(tramp)
     })?;
-    if crate::time::deterministic() {
-        m.install_observer("tick wait (deterministic)", 0x504dc, tick_wait)?;
+    if crate::time::deterministic() || crate::time::cooperative_timer() {
+        m.install_observer("tick wait (guest thread)", 0x504dc, tick_wait)?;
     }
 
     // Gameport joystick (50437..504e0): replaced by the virtual joystick, see joystick.rs.
@@ -379,7 +379,14 @@ fn tick_wait(m: &mut Machine, _f: &mut crate::cpu::HookFrame, tramp: u32) -> cra
     let counter = m.img.link(0x50512);
     let target = unsafe { crate::mem::rd8(m.img.link(0x504e4)) } as u32;
     if let Some(s) = m.sched.as_ref() {
+        let before = crate::time::virtual_ticks();
         s.virtual_ticks_until(|| unsafe { crate::mem::rd32(counter) } as i32 >= target as i32, 1000);
+        if crate::time::cooperative_timer() {
+            let elapsed = crate::time::virtual_ticks() - before;
+            if elapsed > 0 && elapsed < 1000 {
+                crate::time::pace_guest_ticks(elapsed);
+            }
+        }
     }
     crate::hooks::HookResult::Resume(tramp)
 }

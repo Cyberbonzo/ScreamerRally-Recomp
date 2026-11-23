@@ -14,6 +14,10 @@ impl Dpmi {
     pub fn regions(&self) -> Vec<(u32, u32)> {
         self.blocks.values().copied().collect()
     }
+
+    fn free_bytes(&self) -> u32 {
+        self.blocks.values().fold(REPORTED_FREE, |remaining, &(_, size)| remaining.saturating_sub(size))
+    }
 }
 
 #[derive(Default)]
@@ -240,8 +244,9 @@ pub fn int31(m: &mut Machine, c: &mut CONTEXT) -> Result<(), String> {
             c.ok();
         }
         0x0500 => {
-            let pages = REPORTED_FREE / 4096;
-            let info: [u32; 12] = [REPORTED_FREE, pages, pages, pages * 2, pages, pages, pages * 2, pages, pages * 2, u32::MAX, u32::MAX, u32::MAX];
+            let free = m.dpmi.free_bytes();
+            let pages = free / 4096;
+            let info: [u32; 12] = [free, pages, pages, pages * 2, pages, pages, REPORTED_FREE / 4096 * 2, pages, REPORTED_FREE / 4096 * 2, u32::MAX, u32::MAX, u32::MAX];
             unsafe {
                 for (i, v) in info.iter().enumerate() {
                     mem::wr32(c.edi() + i as u32 * 4, *v);
@@ -251,6 +256,12 @@ pub fn int31(m: &mut Machine, c: &mut CONTEXT) -> Result<(), String> {
         }
         0x0501 => {
             let size = get_bx_cx(c);
+            // The race loader probes the largest block. Letting it reserve beyond the
+            // DOS memory budget makes it probe gigabytes of host address space on Wine.
+            if size > m.dpmi.free_bytes() {
+                c.fail(0x8012);
+                return Ok(());
+            }
             match mem::alloc_guest(size.max(1)) {
                 Some(addr) => {
                     m.dpmi.next_handle += 1;
@@ -278,6 +289,7 @@ pub fn int31(m: &mut Machine, c: &mut CONTEXT) -> Result<(), String> {
             let h = get_si_di(c);
             let size = get_bx_cx(c);
             match m.dpmi.blocks.get(&h).copied() {
+                Some((_, old_size)) if size.saturating_sub(old_size) > m.dpmi.free_bytes() => c.fail(0x8012),
                 Some((old, old_size)) => match mem::alloc_guest(size.max(1)) {
                     Some(new) => {
                         unsafe { std::ptr::copy_nonoverlapping(mem::ptr(old), mem::ptr(new), old_size.min(size) as usize) };

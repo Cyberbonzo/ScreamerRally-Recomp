@@ -1139,6 +1139,11 @@ pub fn call(m: &mut Machine, f: &mut HookFrame, index: u32) -> HookResult {
             if menu_fill { crate::native::menus::fill(m) } else { crate::interp::fill(m) }
         }
         hold(m);
+        if crate::time::cooperative_timer() {
+            if let Some(scheduler) = m.sched.as_ref() {
+                scheduler.cooperative_frame();
+            }
+        }
         crate::unlock::tick(m);
         let frame = m.glide.as_ref().map_or(0, |g| g.frames);
         crate::debug_peek(m, frame);
